@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>分了么｜亲密关系危机自检工具 原型</title>
+  <style>
+    :root {
+      --bg: #f7f1e9;
+      --bg-soft: #fffaf4;
+      --card: rgba(255, 252, 246, 0.86);
+      --card-solid: #fffaf4;
+      --text: #251b16;
+      --muted: #7a6a5e;
+      --line: rgba(37, 27, 22, 0.12);
+      --primary: #111111;
+      --accent: #d85d3f;
+      --accent-2: #9f6f50;
+      --ok: #4f7f57;
+      --warn: #b37a1f;
+      --danger: #a33535;
+      --shadow: 0 22px 60px rgba(66, 42, 23, 0.13);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 8% 10%, rgba(216, 93, 63, 0.14), transparent 28%),
+        radial-gradient(circle at 92% 6%, rgba(159, 111, 80, 0.16), transparent 32%),
+        linear-gradient(135deg, #f7f1e9 0%, #efe2d6 48%, #f9f1e6 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.5;
+      background-image:
+        linear-gradient(rgba(37,27,22,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,27,22,.035) 1px, transparent 1px);
+      background-size: 38px 38px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.72), rgba(0,0,0,.12));
+      z-index: -1;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input, textarea, select { font: inherit; }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 22px; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(18px);
+      background: rgba(247, 241, 233, .76);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav {
+      height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 190px;
+    }
+    .logo-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 15px;
+      background: #111;
+      color: #fffaf4;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      letter-spacing: -2px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+    }
+    .brand h1 { font-size: 20px; margin: 0; letter-spacing: -0.02em; }
+    .brand small { display:block; color: var(--muted); margin-top: 2px; font-size: 12px; }
+    .navlinks {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .navlinks button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all .18s ease;
+      white-space: nowrap;
+    }
+    .navlinks button:hover, .navlinks button.active { background: rgba(37,27,22,.08); color: var(--text); }
+
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 18px;
+      cursor: pointer;
+      font-weight: 750;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: var(--primary); color: #fffaf4; box-shadow: 0 16px 36px rgba(0,0,0,.18); }
+    .btn-primary:hover { box-shadow: 0 20px 42px rgba(0,0,0,.22); }
+    .btn-ghost { background: rgba(255,250,244,.75); color: var(--text); border: 1px solid var(--line); }
+    .btn-soft { background: rgba(216,93,63,.1); color: #7d2d20; border: 1px solid rgba(216,93,63,.18); }
+    .btn-small { padding: 9px 12px; font-size: 13px; }
+
+    main { padding: 34px 0 72px; }
+    .screen { display: none; animation: fade .28s ease both; }
+    .screen.active { display: block; }
+    @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr);
+      gap: 28px;
+      align-items: stretch;
+      min-height: 640px;
+    }
+    .hero-card {
+      background: rgba(255,250,244,.78);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      padding: 42px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-card::after {
+      content: "分了么?";
+      position: absolute;
+      right: -20px;
+      bottom: -22px;
+      font-size: 118px;
+      font-weight: 900;
+      letter-spacing: -0.08em;
+      color: rgba(37,27,22,.045);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #6b4431;
+      background: rgba(216,93,63,.1);
+      border: 1px solid rgba(216,93,63,.16);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .hero h2 {
+      font-size: clamp(44px, 7vw, 84px);
+      line-height: .98;
+      letter-spacing: -0.08em;
+      margin: 28px 0 18px;
+      max-width: 760px;
+    }
+    .hero h2 span { color: var(--accent); }
+    .hero p.lead {
+      font-size: 19px;
+      line-height: 1.75;
+      color: #5d4d42;
+      max-width: 650px;
+      margin: 0 0 28px;
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 28px 0; }
+    .trust-row { display:flex; gap:10px; flex-wrap: wrap; margin-top: 30px; }
+    .pill {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.42);
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .phone {
+      background: #161311;
+      color: #fffaf4;
+      border-radius: 42px;
+      padding: 14px;
+      box-shadow: 0 34px 80px rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.12);
+      min-height: 640px;
+      position: relative;
+    }
+    .phone-inner {
+      height: 100%;
+      border-radius: 31px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at top left, rgba(216,93,63,.25), transparent 36%),
+        linear-gradient(180deg, #25201d, #13100f);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-top { display:flex; justify-content:space-between; align-items:center; color:rgba(255,250,244,.7); font-size:12px; margin-bottom: 28px; }
+    .status-card {
+      background: rgba(255,250,244,.09);
+      border: 1px solid rgba(255,250,244,.12);
+      border-radius: 28px;
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+    .status-card h3 { margin: 0 0 8px; font-size: 24px; letter-spacing: -0.04em; }
+    .status-card p { margin: 0; line-height: 1.65; color: rgba(255,250,244,.68); font-size: 14px; }
+    .mini-report { display:grid; gap:10px; margin-top: 18px; }
+    .mini-item { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px; background:rgba(255,255,255,.06); border-radius:16px; color:rgba(255,250,244,.82); }
+    .bar { width: 92px; height: 8px; background:rgba(255,255,255,.12); border-radius:99px; overflow:hidden; }
+    .bar i { display:block; height:100%; border-radius:99px; background: #f2b199; width: var(--w); }
+    .phone-cta { margin-top:auto; display:grid; gap: 10px; }
+    .phone .btn-primary { background:#fffaf4; color:#111; box-shadow:none; }
+    .phone .btn-ghost { background: rgba(255,255,255,.08); color:#fffaf4; border-color: rgba(255,255,255,.14); }
+
+    .section-head { display:flex; justify-content:space-between; gap:20px; align-items:flex-end; margin: 8px 0 22px; }
+    .section-head h2 { font-size: clamp(30px, 5vw, 52px); letter-spacing: -0.06em; margin: 0; }
+    .section-head p { margin: 8px 0 0; color: var(--muted); line-height:1.7; max-width: 700px; }
+
+    .grid { display:grid; gap:18px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .grid.four { grid-template-columns: repeat(4, minmax(0,1fr)); }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 18px 44px rgba(66,42,23,.08);
+      padding: 22px;
+    }
+    .card h3 { margin:0 0 10px; font-size: 22px; letter-spacing:-.03em; }
+    .card p { color: var(--muted); line-height:1.72; margin: 0; }
+    .module-card { cursor:pointer; transition: transform .18s ease, box-shadow .18s ease; position:relative; overflow:hidden; }
+    .module-card:hover { transform: translateY(-3px); box-shadow: 0 26px 56px rgba(66,42,23,.14); }
+    .module-card b { display:block; font-size: 18px; margin-bottom: 8px; }
+    .module-card .tag { margin-bottom: 18px; }
+    .tag { display:inline-flex; align-items:center; border-radius:999px; padding:6px 10px; background:rgba(37,27,22,.07); color:var(--muted); font-size:12px; font-weight:700; }
+    .price-tag { color: #71331f; background: rgba(216,93,63,.11); }
+
+    .progress { height: 10px; background:rgba(37,27,22,.08); border-radius:999px; overflow:hidden; margin: 20px 0; }
+    .progress i { display:block; height:100%; width:0%; background:#111; border-radius:99px; transition: width .24s ease; }
+
+    .question-card { min-height: 420px; display:flex; flex-direction:column; }
+    .question-meta { display:flex; justify-content:space-between; color:var(--muted); font-size:14px; margin-bottom: 18px; }
+    .question-title { font-size: clamp(24px, 4vw, 38px); line-height:1.2; letter-spacing:-.04em; margin: 0 0 18px; }
+    .question-desc { color:var(--muted); line-height:1.75; margin: 0 0 24px; }
+    .options { display:grid; gap: 10px; margin-top:auto; }
+    .option {
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.43);
+      border-radius: 16px;
+      padding: 15px 16px;
+      cursor:pointer;
+      display:flex;
+      justify-content:space-between;
+      gap: 12px;
+      align-items:center;
+      transition: all .16s ease;
+    }
+    .option:hover { border-color: rgba(37,27,22,.25); transform: translateX(2px); }
+    .option.selected { background:#111; color:#fffaf4; border-color:#111; }
+    .test-actions { display:flex; justify-content:space-between; gap:12px; margin-top: 18px; flex-wrap:wrap; }
+
+    .report-hero {
+      display:grid;
+      grid-template-columns: .9fr 1.1fr;
+      gap: 18px;
+      align-items:stretch;
+    }
+    .score-circle {
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      border: 14px solid rgba(37,27,22,.08);
+      display:grid;
+      place-items:center;
+      margin: 8px auto 18px;
+      position:relative;
+      background: conic-gradient(var(--accent) calc(var(--score)*1%), rgba(37,27,22,.08) 0);
+    }
+    .score-circle::before { content:""; position:absolute; inset:14px; background:var(--card-solid); border-radius:50%; }
+    .score-circle strong { position:relative; font-size:42px; letter-spacing:-.06em; }
+    .risk-label { text-align:center; font-size:26px; font-weight:900; letter-spacing:-.04em; margin: 0 0 6px; }
+    .risk-sub { text-align:center; color:var(--muted); margin:0; line-height:1.6; }
+    .metric { padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .metric:last-child { border-bottom: 0; }
+    .metric-top { display:flex; justify-content:space-between; gap:12px; margin-bottom: 8px; font-weight:700; }
+    .metric-line { height: 8px; border-radius:999px; background:rgba(37,27,22,.08); overflow:hidden; }
+    .metric-line i { display:block; height:100%; border-radius:999px; width:var(--w); background:#111; }
+    .advice-list { display:grid; gap:12px; margin: 0; padding: 0; list-style:none; }
+    .advice-list li { padding: 14px 15px; border:1px solid var(--line); border-radius: 16px; background:rgba(255,255,255,.38); line-height:1.7; }
+
+    .textarea {
+      width:100%; min-height:220px; resize:vertical;
+      border:1px solid var(--line); border-radius: 18px;
+      padding: 16px; background:rgba(255,255,255,.54); color:var(--text);
+      outline:none; line-height:1.7;
+    }
+    .textarea:focus, .input:focus, select:focus { border-color: rgba(37,27,22,.34); box-shadow:0 0 0 4px rgba(37,27,22,.06); }
+    .input, select {
+      width:100%; border:1px solid var(--line); border-radius: 14px;
+      padding: 13px 14px; background:rgba(255,255,255,.54); outline:none;
+    }
+    .field { display:grid; gap:8px; margin-bottom: 14px; }
+    .field label { color:var(--muted); font-size: 13px; font-weight: 700; }
+    .sample-row { display:flex; gap:8px; flex-wrap:wrap; margin: 12px 0 16px; }
+
+    .analysis-result { display:none; }
+    .analysis-result.show { display:block; }
+    .result-block { margin-bottom:14px; padding:16px; border-radius: 16px; background:rgba(255,255,255,.4); border: 1px solid var(--line); }
+    .result-block h4 { margin:0 0 8px; font-size:16px; }
+    .result-block p, .result-block li { color:var(--muted); line-height:1.7; }
+    .reply-box { background:#111; color:#fffaf4; padding: 16px; border-radius:18px; line-height:1.75; }
+
+    .pay-card { position:relative; overflow:hidden; }
+    .pay-card::after {
+      content:""; position:absolute; right:-36px; top:-36px; width:120px; height:120px;
+      border-radius:50%; background:rgba(216,93,63,.1);
+    }
+    .price { font-size: 36px; font-weight:900; letter-spacing:-.06em; margin: 18px 0 6px; }
+    .price small { font-size: 14px; color:var(--muted); font-weight:700; letter-spacing:0; }
+    .feature-list { margin: 16px 0 18px; padding:0; list-style:none; display:grid; gap:10px; }
+    .feature-list li { color:#5d4d42; line-height:1.55; display:flex; gap:8px; }
+    .feature-list li::before { content:"✓"; color:var(--ok); font-weight:900; }
+
+    .timeline { display:grid; gap:14px; }
+    .timeline-item { display:grid; grid-template-columns: 92px 1fr; gap:16px; align-items:start; }
+    .timeline-day { font-weight:900; color:#71331f; padding-top:14px; }
+    .timeline-body { padding:14px 16px; border:1px solid var(--line); border-radius:16px; background:rgba(255,255,255,.38); }
+    .timeline-body b { display:block; margin-bottom: 6px; }
+    .timeline-body p { margin:0; color:var(--muted); line-height:1.7; }
+
+    .modal-backdrop {
+      position:fixed; inset:0; background:rgba(18,13,10,.54); backdrop-filter: blur(8px);
+      display:none; align-items:center; justify-content:center; z-index:80; padding:22px;
+    }
+    .modal-backdrop.show { display:flex; }
+    .modal {
+      width:min(620px, 100%); max-height: 88vh; overflow:auto;
+      background:var(--card-solid); border-radius:28px; box-shadow:0 40px 100px rgba(0,0,0,.28);
+      padding: 26px; border:1px solid rgba(255,255,255,.7);
+    }
+    .modal-head { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; margin-bottom: 12px; }
+    .modal-head h3 { margin:0; font-size: 28px; letter-spacing:-.04em; }
+    .x { border:0; background:rgba(37,27,22,.08); width:38px; height:38px; border-radius:99px; cursor:pointer; font-size:18px; }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+      background:#111; color:#fffaf4; padding: 13px 16px; border-radius:999px; box-shadow:0 18px 40px rgba(0,0,0,.22);
+      opacity:0; pointer-events:none; transition: all .22s ease; z-index:100;
+      max-width: calc(100vw - 34px); text-align:center;
+    }
+    .toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+
+    .footer-note { margin-top: 34px; color:var(--muted); line-height:1.8; font-size: 13px; }
+    .divider { height:1px; background:var(--line); margin:26px 0; }
+    .empty-state { text-align:center; padding:42px 20px; color:var(--muted); }
+    .mobile-menu { display:none; }
+
+    @media (max-width: 940px) {
+      .hero, .grid.two, .grid.three, .grid.four, .report-hero { grid-template-columns: 1fr; }
+      .phone { min-height: 560px; max-width: 420px; margin: 0 auto; width:100%; }
+      .section-head { display:block; }
+      .navlinks { display:none; }
+      .mobile-menu { display:inline-flex; }
+      .hero-card { padding: 30px; }
+    }
+    @media (max-width: 560px) {
+      .wrap { padding: 0 14px; }
+      .nav { height:66px; }
+      .brand small { display:none; }
+      main { padding-top: 20px; }
+      .hero-card, .card { padding: 18px; border-radius: 22px; }
+      .hero h2 { font-size: 48px; }
+      .hero p.lead { font-size: 16px; }
+      .timeline-item { grid-template-columns: 1fr; gap:8px; }
+      .timeline-day { padding-top:0; }
+      .phone { border-radius:32px; padding:10px; min-height: 540px; }
+      .phone-inner { border-radius:24px; padding:18px; }
+      .score-circle { width:160px; height:160px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap nav">
+      <a class="brand" href="#home" onclick="go('home')">
+        <div class="logo-mark">分</div>
+        <div>
+          <h1>分了么</h1>
+          <small>亲密关系危机自检工具</small>
+        </div>
+      </a>
+      <nav class="navlinks" id="navlinks">
+        <button class="active" data-route="home">首页</button>
+        <button data-route="test">关系自检</button>
+        <button data-route="chat">聊天分析</button>
+        <button data-route="plan">分手后 7 天</button>
+        <button data-route="services">付费服务</button>
+        <button data-route="feedback">用户反馈</button>
+      </nav>
+      <button class="btn btn-ghost btn-small mobile-menu" onclick="openMenu()">菜单</button>
+      <button class="btn btn-primary btn-small" onclick="go('test')">开始体验</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="screen-home" class="screen active">
+      <div class="hero">
+        <div class="hero-card">
+          <span class="kicker">商业原型 · 可交互体验版</span>
+          <h2>先别急着<span>分</span>，也别急着原谅。</h2>
+          <p class="lead">分了么不是“AI 替你判决分不分”，而是一套关系危机自检工具。它帮你把事实、感受、风险和下一步行动拆开，让你在最混乱的时候先恢复一点清醒。</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" onclick="go('test')">开始关系自检</button>
+            <button class="btn btn-ghost" onclick="go('chat')">试试聊天记录分析</button>
+            <button class="btn btn-soft" onclick="go('services')">查看付费服务原型</button>
+          </div>
+          <div class="trust-row">
+            <span class="pill">不劝分，不劝和</span>
+            <span class="pill">先整理事实，再给建议</span>
+            <span class="pill">原型数据仅在本地浏览器演示</span>
+            <span class="pill">高风险关系优先现实求助</span>
+          </div>
+          <div class="divider"></div>
+          <div class="grid three">
+            <div class="card module-card" onclick="go('test')">
+              <span class="tag">01</span>
+              <b>要不要分</b>
+              <p>回答 12 个问题，得到一张关系状态卡，看见你们现在到底卡在哪里。</p>
+            </div>
+            <div class="card module-card" onclick="go('chat')">
+              <span class="tag">02</span>
+              <b>还能不能谈</b>
+              <p>粘贴一段聊天，区分事实、猜测和感受，并生成更稳的下一句话。</p>
+            </div>
+            <div class="card module-card" onclick="go('plan')">
+              <span class="tag">03</span>
+              <b>分完怎么办</b>
+              <p>如果已经结束，先用 7 天计划稳住生活节律，而不是反复复联。</p>
+            </div>
+          </div>
+        </div>
+        <aside class="phone" aria-label="移动端效果预览">
+          <div class="phone-inner">
+            <div class="phone-top"><span>9:41</span><span>分了么 Demo</span></div>
+            <div class="status-card">
+              <h3>你们现在，是真的不合适，还是只是没谈清楚？</h3>
+              <p>选择一个最接近你此刻的问题，系统会给你一份可执行的关系反馈。</p>
+              <div class="mini-report">
+                <div class="mini-item"><span>沟通耗竭</span><span class="bar"><i style="--w:72%"></i></span></div>
+                <div class="mini-item"><span>修复空间</span><span class="bar"><i style="--w:46%"></i></span></div>
+                <div class="mini-item"><span>边界风险</span><span class="bar"><i style="--w:63%"></i></span></div>
+              </div>
+            </div>
+            <div class="status-card">
+              <h3 style="font-size:20px;">推荐下一步</h3>
+              <p>不要立刻发长文。先用一个具体问题进行低攻击性确认：我想确认，我们现在对这段关系的期待是不是一样？</p>
+            </div>
+            <div class="phone-cta">
+              <button class="btn btn-primary" onclick="go('test')">免费生成关系状态卡</button>
+              <button class="btn btn-ghost" onclick="go('services')">解锁完整关系报告</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="screen-test" class="screen">
+      <div class="section-head">
+        <div>
+          <span class="kicker">关系危机自检</span>
+          <h2>要不要分？先做一次 12 题自检。</h2>
+          <p>这不是诊断，也不是判决。它只是帮你把关系中的消耗、沟通、边界和修复空间先看清楚。</p>
+        </div>
+        <button class="btn btn-ghost" onclick="resetTest()">重新开始</button>
+      </div>
+      <div class="grid two">
+        <div class="card question-card">
+          <div class="question-meta">
+            <span id="qIndex">第 1 / 12 题</span>
+            <span id="qType">沟通</span>
+          </div>
+          <div class="progress"><i id="qProgress"></i></div>
+          <h3 class="question-title" id="qTitle"></h3>
+          <p class="question-desc" id="qDesc"></p>
+          <div class="options" id="options"></div>
+          <div class="test-actions">
+            <button class="btn btn-ghost" onclick="prevQ()">上一题</button>
+            <button class="btn btn-primary" onclick="nextQ()" id="nextBtn">下一题</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>你会得到什么？</h3>
+          <p>完成后会生成一张“关系状态卡”，包含风险分数、关系类型、可修复部分、高风险部分和下一次沟通建议。</p>
+          <div class="divider"></div>
+          <ul class="advice-list">
+            <li><b>不输出粗暴结论：</b>不会直接说“必须分”或“必须原谅”。</li>
+            <li><b>可执行反馈：</b>提供下一句话怎么说、接下来观察什么、什么时候应该停止拉扯。</li>
+            <li><b>商业化入口：</b>基础自检免费，深度报告和真人复盘作为付费服务原型展示。</li>
+          </ul>
+          <div class="divider"></div>
+          <button class="btn btn-soft" onclick="quickFillTest()">一键填充示例答案</button>
+        </div>
+      </div>
+
+      <div id="report" style="display:none; margin-top:18px;">
+        <div class="section-head">
+          <div>
+            <span class="kicker">你的关系状态卡</span>
+            <h2 id="reportTitle">高消耗拉扯期</h2>
+            <p id="reportSummary">你们的问题不是单次争吵，而是长期存在未被正面处理的关系模式。</p>
+          </div>
+          <button class="btn btn-primary" onclick="openPay('完整关系报告', 19.9)">解锁完整报告</button>
+        </div>
+        <div class="report-hero">
+          <div class="card">
+            <div class="score-circle" id="scoreCircle" style="--score:68"><strong id="riskScore">68</strong></div>
+            <p class="risk-label" id="riskLabel">中高风险</p>
+            <p class="risk-sub" id="riskSub">建议先暂停冲动表达，进行一次明确而低攻击性的沟通。</p>
+            <div class="divider"></div>
+            <button class="btn btn-primary" style="width:100%;" onclick="go('chat')">分析一段聊天记录</button>
+          </div>
+          <div class="card" id="metricsBox"></div>
+        </div>
+        <div class="grid two" style="margin-top:18px;">
+          <div class="card">
+            <h3>系统看到的关系模式</h3>
+            <ul class="advice-list" id="patternList"></ul>
+          </div>
+          <div class="card">
+            <h3>下一步建议</h3>
+            <ul class="advice-list" id="nextList"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-chat" class="screen">
+      <div class="section-head">
+        <div>
+          <span class="kicker">聊天记录分析</span>
+          <h2>还能不能谈？先把这段聊天拆开。</h2>
+          <p>把聊天记录粘贴进来，原型会用简单规则模拟“AI 关系复盘”的反馈：事实、情绪、关系风险和下一句建议。</p>
+        </div>
+      </div>
+      <div class="grid two">
+        <div class="card">
+          <div class="field">
+            <label>关系阶段</label>
+            <select id="relationStage">
+              <option>暧昧期</option>
+              <option selected>恋爱中</option>
+              <option>冷战中</option>
+              <option>刚分手</option>
+              <option>复合拉扯中</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>你的目标</label>
+            <select id="chatGoal">
+              <option selected>想好好谈一次</option>
+              <option>想确认关系</option>
+              <option>想表达边界</option>
+              <option>想体面分开</option>
+              <option>想判断要不要复联</option>
+            </select>
+          </div>
+          <label style="display:block; color:var(--muted); font-size:13px; font-weight:700; margin-bottom:8px;">聊天记录</label>
+          <textarea id="chatInput" class="textarea" placeholder="示例：\n我：你最近是不是不太想理我？\nTA：你能不能别想太多，我最近真的很忙。\n我：可是你以前不是这样的。\nTA：那你要这样想我也没办法。"></textarea>
+          <div class="sample-row">
+            <button class="btn btn-ghost btn-small" onclick="loadSample('avoid')">示例：回避拉扯</button>
+            <button class="btn btn-ghost btn-small" onclick="loadSample('boundary')">示例：边界不清</button>
+            <button class="btn btn-ghost btn-small" onclick="loadSample('breakup')">示例：分手沟通</button>
+          </div>
+          <button class="btn btn-primary" onclick="analyzeChat()">生成分析反馈</button>
+        </div>
+        <div class="card analysis-result" id="analysisResult">
+          <h3>聊天分析结果</h3>
+          <div class="result-block">
+            <h4>1. 事实层</h4>
+            <p id="factResult"></p>
+          </div>
+          <div class="result-block">
+            <h4>2. 感受层</h4>
+            <p id="emotionResult"></p>
+          </div>
+          <div class="result-block">
+            <h4>3. 风险提示</h4>
+            <p id="riskResult"></p>
+          </div>
+          <div class="result-block">
+            <h4>4. 建议下一句</h4>
+            <div class="reply-box" id="replyResult"></div>
+          </div>
+          <button class="btn btn-soft" onclick="openPay('聊天记录深度复盘', 19.9)">解锁深度复盘示例</button>
+        </div>
+        <div class="card empty-state" id="analysisEmpty">
+          <h3>等待分析</h3>
+          <p>粘贴聊天记录后，右侧会出现模拟反馈。正式版可接入真实 AI 分析和长期关系档案。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-plan" class="screen">
+      <div class="section-head">
+        <div>
+          <span class="kicker">分完怎么办</span>
+          <h2>分手后 7 天，不要先急着“想明白一切”。</h2>
+          <p>这个模块服务已经分开、正在戒断、反复想复联的人。先稳住睡眠、饮食、社交和表达冲动，再慢慢复盘关系。</p>
+        </div>
+        <button class="btn btn-primary" onclick="openPay('30 天分手恢复陪伴', 39.9)">查看完整 30 天计划</button>
+      </div>
+      <div class="grid two">
+        <div class="card">
+          <h3>选择你现在的状态</h3>
+          <div class="field">
+            <label>分手状态</label>
+            <select id="breakupStatus" onchange="renderPlan()">
+              <option>刚刚分开，情绪很强</option>
+              <option>已经分开几天，反复想复联</option>
+              <option>分开很久，但还是走不出来</option>
+              <option>对方回来找我，我不知道怎么办</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>今天最强的冲动</label>
+            <select id="breakupImpulse" onchange="renderPlan()">
+              <option>想发很长一段话</option>
+              <option>想看对方动态</option>
+              <option>想问共同朋友</option>
+              <option>想立刻复合</option>
+              <option>想把所有东西删掉</option>
+            </select>
+          </div>
+          <div class="result-block">
+            <h4>今日急救卡</h4>
+            <p id="rescueCard"></p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>7 天恢复计划</h3>
+          <div class="timeline" id="timeline"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-services" class="screen">
+      <div class="section-head">
+        <div>
+          <span class="kicker">付费服务原型</span>
+          <h2>免费自检建立信任，深度服务完成转化。</h2>
+          <p>这里展示的是商业向服务包装原型：价格、交付内容、样例说明、模拟下单反馈。当前不会真的收款。</p>
+        </div>
+      </div>
+      <div class="grid three">
+        <div class="card pay-card">
+          <span class="tag price-tag">低价转化</span>
+          <h3>完整关系报告</h3>
+          <p>适合“不知道要不要继续”的用户，输出一份结构化关系复盘。</p>
+          <div class="price">¥19.9 <small>/ 次</small></div>
+          <ul class="feature-list">
+            <li>关系风险雷达图</li>
+            <li>核心矛盾与可修复部分</li>
+            <li>一次关键沟通脚本</li>
+            <li>7 天观察清单</li>
+          </ul>
+          <button class="btn btn-primary" onclick="openPay('完整关系报告', 19.9)">模拟购买</button>
+        </div>
+        <div class="card pay-card">
+          <span class="tag price-tag">高情绪需求</span>
+          <h3>聊天深度复盘</h3>
+          <p>适合“我不知道 TA 这句话是什么意思”的用户，分析 1 组聊天。</p>
+          <div class="price">¥29.9 <small>/ 次</small></div>
+          <ul class="feature-list">
+            <li>事实 / 情绪 / 猜测拆分</li>
+            <li>互动模式判断</li>
+            <li>下一句回复建议</li>
+            <li>不建议发送的话</li>
+          </ul>
+          <button class="btn btn-primary" onclick="openPay('聊天深度复盘', 29.9)">模拟购买</button>
+        </div>
+        <div class="card pay-card">
+          <span class="tag price-tag">长期陪伴</span>
+          <h3>30 天分手恢复陪伴</h3>
+          <p>适合刚分手、反复想复联、睡眠和生活秩序被打乱的人。</p>
+          <div class="price">¥39.9 <small>/ 30 天</small></div>
+          <ul class="feature-list">
+            <li>每日情绪急救卡</li>
+            <li>复联冲动管理</li>
+            <li>关系复盘问题</li>
+            <li>生活节律恢复任务</li>
+          </ul>
+          <button class="btn btn-primary" onclick="openPay('30 天分手恢复陪伴', 39.9)">模拟购买</button>
+        </div>
+      </div>
+      <div class="grid two" style="margin-top:18px;">
+        <div class="card">
+          <h3>真人复盘服务</h3>
+          <p>当用户需要更深的判断，可以预约真人咨询师/关系复盘师。原型只展示服务介绍，不接入真实预约。</p>
+          <div class="price">¥199 <small>/ 45 分钟</small></div>
+          <ul class="feature-list">
+            <li>一次关系事件完整复盘</li>
+            <li>一份沟通或分手行动方案</li>
+            <li>适合复杂关系、反复拉扯、复合犹豫</li>
+          </ul>
+          <button class="btn btn-soft" onclick="openPay('真人关系复盘预约', 199)">预约原型</button>
+        </div>
+        <div class="card">
+          <h3>付费服务样例</h3>
+          <p>用户购买后不应该只得到一段鸡汤，而应该得到可以复制、执行、复盘的内容。</p>
+          <div class="divider"></div>
+          <div class="reply-box">示例交付：你们当前属于“高投入低确认型关系”。建议在 48 小时内进行一次低攻击性确认，不发送控诉长文。可使用话术：“我想认真确认一下，我们现在对这段关系的期待是不是一样。”</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-feedback" class="screen">
+      <div class="section-head">
+        <div>
+          <span class="kicker">第一位用户反馈</span>
+          <h2>让用户体验完，留下可用反馈。</h2>
+          <p>这个模块模拟收集首位用户的体验意见。当前反馈只保存在本地浏览器，可复制给你用于迭代。</p>
+        </div>
+      </div>
+      <div class="grid two">
+        <div class="card">
+          <div class="field">
+            <label>你最想解决的问题</label>
+            <select id="fbNeed">
+              <option>不知道要不要分手</option>
+              <option>想分析一段聊天</option>
+              <option>想知道怎么好好谈</option>
+              <option>分手后走不出来</option>
+              <option>只是想测测关系状态</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>这个原型对你有用吗？</label>
+            <select id="fbUseful">
+              <option>很有用，我愿意继续用</option>
+              <option>有一点用，但还不够准</option>
+              <option>界面不错，但反馈不够深</option>
+              <option>我不太会信任这种产品</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>你愿意为什么付费？</label>
+            <select id="fbPay">
+              <option>完整关系报告</option>
+              <option>聊天深度复盘</option>
+              <option>分手恢复陪伴</option>
+              <option>真人咨询/复盘</option>
+              <option>暂时不愿付费</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>补充意见</label>
+            <textarea id="fbText" class="textarea" style="min-height:140px;" placeholder="哪里打动你？哪里不可信？你最希望它帮你完成哪一步？"></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="saveFeedback()">提交本地反馈</button>
+        </div>
+        <div class="card">
+          <h3>反馈记录</h3>
+          <div id="feedbackList" class="empty-state">还没有反馈。</div>
+          <div class="divider"></div>
+          <button class="btn btn-ghost" onclick="copyFeedback()">复制反馈 JSON</button>
+          <button class="btn btn-soft" onclick="clearFeedback()">清空本地反馈</button>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer-note">原型说明：本页面为产品概念演示，不提供医学、心理治疗、法律或安全保护服务。若关系中出现暴力、威胁、跟踪、自伤风险或人身安全风险，请优先联系可信赖的人、当地紧急服务或专业机构。当前所有输入仅在本地浏览器中进行演示，不连接服务器。</p>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <span class="kicker">模拟付费流程</span>
+          <h3 id="modalTitle">完整关系报告</h3>
+        </div>
+        <button class="x" onclick="closeModal()">×</button>
+      </div>
+      <p id="modalDesc" style="color:var(--muted); line-height:1.75;">这里是商业原型展示，不会真实扣费。</p>
+      <div class="divider"></div>
+      <div class="grid two">
+        <div class="field">
+          <label>昵称</label>
+          <input class="input" id="buyerName" placeholder="例如：A" />
+        </div>
+        <div class="field">
+          <label>联系方式，可不填</label>
+          <input class="input" id="buyerContact" placeholder="微信 / 手机 / 邮箱" />
+        </div>
+      </div>
+      <div class="field">
+        <label>你希望这项服务重点帮你解决什么？</label>
+        <textarea id="buyerNeed" class="textarea" style="min-height:110px;" placeholder="例如：我想知道这段关系还有没有沟通空间，或者我该怎么体面结束。"></textarea>
+      </div>
+      <div class="result-block">
+        <h4>预计交付</h4>
+        <p id="deliverableText">关系风险评分、核心矛盾、可修复部分、下一次沟通脚本、7 天观察清单。</p>
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="confirmPay()">确认模拟下单</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="menuBackdrop">
+    <div class="modal">
+      <div class="modal-head"><h3>导航</h3><button class="x" onclick="closeMenu()">×</button></div>
+      <div class="grid">
+        <button class="btn btn-ghost" onclick="go('home'); closeMenu();">首页</button>
+        <button class="btn btn-ghost" onclick="go('test'); closeMenu();">关系自检</button>
+        <button class="btn btn-ghost" onclick="go('chat'); closeMenu();">聊天分析</button>
+        <button class="btn btn-ghost" onclick="go('plan'); closeMenu();">分手后 7 天</button>
+        <button class="btn btn-ghost" onclick="go('services'); closeMenu();">付费服务</button>
+        <button class="btn btn-ghost" onclick="go('feedback'); closeMenu();">用户反馈</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const routes = ['home', 'test', 'chat', 'plan', 'services', 'feedback'];
+    function go(route) {
+      routes.forEach(r => document.getElementById('screen-' + r).classList.toggle('active', r === route));
+      document.querySelectorAll('[data-route]').forEach(btn => btn.classList.toggle('active', btn.dataset.route === route));
+      window.scrollTo({top: 0, behavior: 'smooth'});
+      history.replaceState(null, '', '#' + route);
+    }
+    window.addEventListener('load', () => {
+      const hash = location.hash.replace('#','');
+      if (routes.includes(hash)) go(hash);
+      renderQuestion();
+      renderPlan();
+      renderFeedback();
+    });
+    document.querySelectorAll('[data-route]').forEach(btn => btn.addEventListener('click', () => go(btn.dataset.route)));
+
+    function showToast(text) {
+      const el = document.getElementById('toast');
+      el.textContent = text;
+      el.classList.add('show');
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+    }
+
+    const questions = [
+      {type:'沟通', title:'当你表达不舒服时，TA 通常会怎么回应？', desc:'这里关注的是“你的感受能不能被认真接住”，而不是 TA 有没有马上同意你。', metric:'communication', opts:[['愿意听，也会回应具体问题',1],['有时愿意，有时会回避',2],['经常说我想太多/太敏感',4],['会反过来指责、冷处理或消失',5]]},
+      {type:'确认', title:'你们对关系的期待清楚吗？', desc:'比如是否认真经营、是否公开、是否排他、未来节奏是否基本一致。', metric:'clarity', opts:[['比较清楚，也谈过边界',1],['大方向清楚，细节模糊',2],['我想确认，但 TA 总回避',4],['完全模糊，我一直在猜',5]]},
+      {type:'消耗', title:'这段关系最近给你的主要感受是什么？', desc:'不是看有没有快乐，而是看快乐和消耗的比例。', metric:'drain', opts:[['总体稳定，偶尔有矛盾',1],['开心和疲惫差不多',2],['更多时候是焦虑和内耗',4],['已经影响睡眠、工作或自我评价',5]]},
+      {type:'边界', title:'TA 是否尊重你的边界？', desc:'包括时间、身体、隐私、社交、金钱和表达拒绝的权利。', metric:'boundary', opts:[['基本尊重，能协商',1],['有时会忽略，但可沟通',2],['经常越界，还说我小题大做',4],['有控制、威胁、羞辱或强迫行为',5]]},
+      {type:'修复', title:'矛盾发生后，你们能不能修复？', desc:'好的关系不是没有冲突，而是冲突后能不能回到理解和行动。', metric:'repair', opts:[['能复盘，也会调整',1],['会和好，但问题重复出现',2],['总是我先低头，问题没解决',4],['几乎没有修复，只是拖过去',5]]},
+      {type:'投入', title:'你们的投入是否大致对等？', desc:'包括时间、主动性、情绪劳动、关系确认和解决问题的意愿。', metric:'balance', opts:[['大致对等',1],['阶段性不平衡，但能沟通',2],['长期主要是我在维持',4],['我像一个人在谈两个人的恋爱',5]]},
+      {type:'安全', title:'你有没有因为这段关系变得不像自己？', desc:'比如反复自责、隐藏需求、讨好、害怕表达、怀疑自己是否值得被爱。', metric:'self', opts:[['没有，我仍然比较稳定',1],['偶尔会，但能恢复',2],['经常会压抑自己',4],['我感觉自尊和生活秩序被明显破坏',5]]},
+      {type:'信任', title:'你们之间的信任状态如何？', desc:'信任不是“完全不怀疑”，而是出现怀疑后能不能谈清楚。', metric:'trust', opts:[['基本可信，有问题能问',1],['有些不安，但没有实质问题',2],['我经常查证、猜测、反复确认',4],['出现过欺骗、背叛或持续隐瞒',5]]},
+      {type:'未来', title:'你能想象继续三个月后的自己吗？', desc:'不是问你爱不爱，而是问你愿不愿意继续承受现在这种模式。', metric:'future', opts:[['可以，且有期待',1],['可以，但希望改变',2],['很犹豫，想到就疲惫',4],['不敢想，感觉会越来越糟',5]]},
+      {type:'支持', title:'如果你把真实情况告诉朋友，朋友大概率会怎么说？', desc:'外部视角不能替你决定，但能帮助你看见自己是否在合理化痛苦。', metric:'outside', opts:[['会觉得你们有问题但可谈',1],['会建议认真沟通一次',2],['会劝我别再消耗自己',4],['会担心我的安全或状态',5]]},
+      {type:'尝试', title:'你是否已经认真尝试过解决？', desc:'比如明确谈过需求、边界和具体改变，而不是只在情绪里反复争吵。', metric:'try', opts:[['尝试过，也看见改变',1],['尝试过，但改变不稳定',2],['尝试很多次，对方没行动',4],['已经不想再尝试了',5]]},
+      {type:'决定', title:'如果今天先不做决定，你最需要什么？', desc:'这题帮助系统判断你更需要沟通、观察、离开准备，还是分手恢复。', metric:'need', opts:[['一次好好谈清楚的机会',1],['一段观察和调整期',2],['一个体面离开的方案',4],['分手后的恢复陪伴',5]]}
+    ];
+    let q = 0;
+    let answers = Array(questions.length).fill(null);
+
+    function renderQuestion() {
+      const item = questions[q];
+      document.getElementById('qIndex').textContent = `第 ${q + 1} / ${questions.length} 题`;
+      document.getElementById('qType').textContent = item.type;
+      document.getElementById('qProgress').style.width = `${(q) / questions.length * 100}%`;
+      document.getElementById('qTitle').textContent = item.title;
+      document.getElementById('qDesc').textContent = item.desc;
+      const box = document.getElementById('options');
+      box.innerHTML = '';
+      item.opts.forEach((opt, i) => {
+        const div = document.createElement('div');
+        div.className = 'option' + (answers[q] === i ? ' selected' : '');
+        div.innerHTML = `<span>${opt[0]}</span><b>${['A','B','C','D'][i]}</b>`;
+        div.onclick = () => { answers[q] = i; renderQuestion(); };
+        box.appendChild(div);
+      });
+      document.getElementById('nextBtn').textContent = q === questions.length - 1 ? '生成关系状态卡' : '下一题';
+    }
+    function nextQ() {
+      if (answers[q] === null) return showToast('先选择一个最接近你的选项');
+      if (q < questions.length - 1) { q++; renderQuestion(); }
+      else { document.getElementById('qProgress').style.width = '100%'; generateReport(); }
+    }
+    function prevQ() { if (q > 0) { q--; renderQuestion(); } }
+    function resetTest() { q = 0; answers = Array(questions.length).fill(null); document.getElementById('report').style.display = 'none'; renderQuestion(); showToast('已重置自检'); }
+    function quickFillTest() {
+      answers = [2,2,2,1,2,2,2,2,2,2,2,1];
+      q = questions.length - 1;
+      renderQuestion();
+      showToast('已填入示例答案，可直接生成报告');
+    }
+
+    function generateReport() {
+      const values = answers.map((idx, i) => questions[i].opts[idx][1]);
+      const sum = values.reduce((a,b)=>a+b,0);
+      const risk = Math.round((sum - questions.length) / (questions.length * 4) * 100);
+      const communication = avgBy(['communication','clarity','repair','try']);
+      const drain = avgBy(['drain','self','future']);
+      const boundary = avgBy(['boundary','trust','outside']);
+      const repair = 100 - avgBy(['repair','balance','try']);
+      let title, label, sub, summary, patterns, next;
+      if (risk < 28) {
+        title = '可沟通修复期'; label = '低到中风险'; sub = '这段关系仍有较明显的沟通空间。';
+        summary = '目前更像是具体矛盾没有谈清，而不是关系已经失去修复基础。';
+        patterns = ['你们仍能接住彼此的部分感受，适合把问题具体化。', '暂时不建议用“分不分”逼迫对方表态，可以先谈一个具体边界。', '关系里仍有修复意愿，重点是把承诺变成可观察行动。'];
+        next = ['选一个最小问题谈起，不要一次翻完旧账。', '约定一个 7 天观察点：对方是否真的有行动。', '把“你总是”改成“当这件事发生时，我会感到……”。'];
+      } else if (risk < 58) {
+        title = '高消耗拉扯期'; label = '中高风险'; sub = '你们还有沟通可能，但消耗已经开始超过快乐。';
+        summary = '这段关系的核心不是单次争吵，而是反复出现的拉扯、回避或确认不足。';
+        patterns = ['你可能在用更多解释替对方补足行动。', '关系中的不确定感正在消耗你的生活秩序。', '仍可尝试一次明确沟通，但不要无限延长观察期。'];
+        next = ['进行一次低攻击性确认：我们是否都愿意认真解决这个问题？', '把观察期控制在 7 到 14 天，不要长期悬置。', '如果对方继续否认、回避或转移责任，进入离开准备。'];
+      } else if (risk < 80) {
+        title = '离开准备期'; label = '高风险'; sub = '这段关系已经明显影响你的稳定感，需要优先保护自己。';
+        summary = '你更需要的可能不是再证明谁对谁错，而是恢复边界和生活秩序。';
+        patterns = ['长期不对等投入让你进入自我怀疑。', '问题已经多次出现，但缺少稳定修复。', '你可能在害怕失去关系和害怕继续受伤之间来回摆动。'];
+        next = ['不要在情绪高峰做最后谈判，先写下自己的底线。', '整理共同财物、住处、账号、社交关系等现实事项。', '把分手沟通控制在事实和边界，不展开无限争辩。'];
+      } else {
+        title = '高危止损期'; label = '极高风险'; sub = '如果存在暴力、威胁、控制或自伤风险，请优先现实求助。';
+        summary = '这已经不只是关系好不好，而是你是否还能安全、稳定、有尊严地生活。';
+        patterns = ['关系中可能存在控制、威胁、羞辱或严重边界侵犯。', '你已经明显失去自我稳定感和表达空间。', '继续拉扯可能让风险升级，建议优先联系现实支持。'];
+        next = ['先告诉一个可信赖的人你的真实处境。', '不要独自进行高冲突分手谈判，必要时选择公共场所或远程表达。', '如有人身安全或自伤风险，请优先联系当地紧急服务或专业机构。'];
+      }
+      document.getElementById('report').style.display = 'block';
+      document.getElementById('reportTitle').textContent = title;
+      document.getElementById('reportSummary').textContent = summary;
+      document.getElementById('riskScore').textContent = risk;
+      document.getElementById('scoreCircle').style.setProperty('--score', risk);
+      document.getElementById('riskLabel').textContent = label;
+      document.getElementById('riskSub').textContent = sub;
+      const metrics = [
+        ['沟通耗竭', communication], ['情绪消耗', drain], ['边界风险', boundary], ['修复空间', repair]
+      ];
+      document.getElementById('metricsBox').innerHTML = '<h3>关系雷达</h3>' + metrics.map(m => `<div class="metric"><div class="metric-top"><span>${m[0]}</span><span>${m[1]}%</span></div><div class="metric-line"><i style="--w:${m[1]}%"></i></div></div>`).join('');
+      document.getElementById('patternList').innerHTML = patterns.map(x => `<li>${x}</li>`).join('');
+      document.getElementById('nextList').innerHTML = next.map(x => `<li>${x}</li>`).join('');
+      setTimeout(()=> document.getElementById('report').scrollIntoView({behavior:'smooth', block:'start'}), 120);
+
+      function avgBy(keys) {
+        const arr = questions.map((qq, i) => keys.includes(qq.metric) ? values[i] : null).filter(Boolean);
+        const avg = arr.reduce((a,b)=>a+b,0) / arr.length;
+        return Math.round((avg - 1) / 4 * 100);
+      }
+    }
+
+    function loadSample(type) {
+      const samples = {
+        avoid: '我：你最近是不是不太想理我？\nTA：你能不能别想太多，我最近真的很忙。\n我：可是你以前不是这样的。\nTA：那你要这样想我也没办法。\n我：我只是想知道我们现在到底算什么。\nTA：你又来了。',
+        boundary: '我：我不太喜欢你每次都临时取消约定。\nTA：我又不是故意的，你干嘛这么计较？\n我：可是我会提前安排时间。\nTA：那你下次别等我不就好了。\n我：我需要你至少提前告诉我。\nTA：随便你吧。',
+        breakup: '我：我想认真谈一下，我们这样继续好像都很累。\nTA：所以你就是想分手？\n我：我不是想吵架，我只是觉得我们很多问题都没有被解决。\nTA：你要分就分，别说这么多。\n我：我希望我们至少把共同的东西处理好。'
+      };
+      document.getElementById('chatInput').value = samples[type];
+      showToast('已载入示例聊天');
+    }
+
+    function analyzeChat() {
+      const text = document.getElementById('chatInput').value.trim();
+      if (!text) return showToast('请先粘贴一段聊天记录');
+      const lower = text.toLowerCase();
+      let riskLevel = 1;
+      const redFlags = ['随便你', '你又来了', '别想太多', '小题大做', '没办法', '要分就分', '神经', '威胁', '滚'];
+      redFlags.forEach(w => { if (text.includes(w)) riskLevel++; });
+      const hasBoundary = ['边界', '需要', '不喜欢', '提前', '尊重', '确认'].some(w => text.includes(w));
+      const hasBreak = ['分手', '分开', '结束', '不继续'].some(w => text.includes(w));
+      const stage = document.getElementById('relationStage').value;
+      const goal = document.getElementById('chatGoal').value;
+      document.getElementById('factResult').textContent = hasBoundary
+        ? '你正在提出一个具体需求或边界，但对方的回应更偏防御、回避或轻描淡写。当前需要确认：对方是不理解，还是不愿意调整。'
+        : '这段聊天里，你更像是在寻求确认，对方则倾向于把问题归结为“你想太多”。双方没有真正进入具体问题。';
+      document.getElementById('emotionResult').textContent = stage.includes('刚分手')
+        ? '你可能同时有委屈、不甘心和想把话说完整的冲动。此时最需要避免的是用一大段解释换取对方理解。'
+        : '你可能感到不安、被敷衍，甚至开始怀疑自己的需求是不是太多。注意：有需求不等于你在无理取闹。';
+      document.getElementById('riskResult').textContent = riskLevel >= 4
+        ? '风险较高：对方多次使用否认、回避或终止对话的表达。建议不要继续升级争辩，先把自己的底线和现实安排写清楚。'
+        : '风险中等：这段对话仍有继续沟通的空间，但需要从“你到底爱不爱我”转成“这个具体问题你愿不愿意一起解决”。';
+      let reply = '我不是想吵架，也不是想逼你立刻给结论。我只是想确认：这件事对我来说确实重要，你愿不愿意和我一起具体解决？如果你不想，我也希望你能明确告诉我。';
+      if (goal.includes('边界')) reply = '我尊重你的安排，但我也需要自己的时间被尊重。以后如果要取消，希望你能提前告诉我；如果这件事对你来说做不到，也请直接说清楚。';
+      if (goal.includes('体面分开') || hasBreak) reply = '我想我们都已经很累了。我不想再用争吵结束这段关系。接下来我更希望把共同物品、联系方式和后续边界处理清楚。';
+      if (goal.includes('复联')) reply = '我现在有想联系你的冲动，但我也知道这可能只是情绪还没有稳定。今天我会先不发消息，明天再判断这件事是不是仍然重要。';
+      document.getElementById('replyResult').textContent = reply;
+      document.getElementById('analysisResult').classList.add('show');
+      document.getElementById('analysisEmpty').style.display = 'none';
+      showToast('已生成模拟分析反馈');
+    }
+
+    function renderPlan() {
+      const impulse = document.getElementById('breakupImpulse')?.value || '想发很长一段话';
+      const status = document.getElementById('breakupStatus')?.value || '刚刚分开，情绪很强';
+      let rescue = '今天先不要发长文。把想说的话写在备忘录里，等 24 小时后再决定是否发送。你现在需要的是降低冲动，而不是立刻获得答案。';
+      if (impulse.includes('动态')) rescue = '先把对方动态入口移出首页 48 小时。不是为了假装不在乎，而是为了减少反复刺激。';
+      if (impulse.includes('共同朋友')) rescue = '今天不要通过共同朋友打听。这样会让你继续停留在对方反应里，先把注意力拉回自己的生活安排。';
+      if (impulse.includes('复合')) rescue = '先写下你想复合的原因，再写下上一次导致分开的真实问题。只有两个列表都清楚，才适合谈复合。';
+      if (impulse.includes('删掉')) rescue = '不要在情绪最高点做不可逆操作。可以先归档、隐藏、交给朋友暂存，给自己留一个缓冲。';
+      if (status.includes('回来找我')) rescue = '先不要立刻答应或拒绝。你需要问的是：导致分开的核心问题有没有具体改变，而不是对方现在是否想你。';
+      document.getElementById('rescueCard').textContent = rescue;
+      const days = [
+        ['Day 1', '停止解释冲动', '不要发长文，不追问共同朋友。把所有想说的话写下来，但今天不发送。'],
+        ['Day 2', '恢复身体节律', '优先吃饭、洗澡、睡觉、出门走 20 分钟。先让身体知道你还安全。'],
+        ['Day 3', '整理刺激源', '把聊天记录、照片、动态入口做临时隐藏，不做永久删除。'],
+        ['Day 4', '关系事实复盘', '只写事实，不写推测：发生了什么、重复了几次、我表达过什么、对方行动是什么。'],
+        ['Day 5', '重建外部支持', '约一个可信赖的人吃饭或散步。不要只讲 TA，也讲你接下来想怎么生活。'],
+        ['Day 6', '识别复联冲动', '当你想联系 TA，先问：我是想解决问题，还是想缓解戒断？'],
+        ['Day 7', '做一个小决定', '决定接下来 7 天的边界：不联系、只处理现实事务，或约一次清晰谈话。']
+      ];
+      document.getElementById('timeline').innerHTML = days.map(d => `<div class="timeline-item"><div class="timeline-day">${d[0]}</div><div class="timeline-body"><b>${d[1]}</b><p>${d[2]}</p></div></div>`).join('');
+    }
+
+    function openPay(name, price) {
+      const deliverables = {
+        '完整关系报告': '关系风险评分、核心矛盾、可修复部分、下一次沟通脚本、7 天观察清单。',
+        '聊天记录深度复盘': '聊天逐句拆解、事实/感受/猜测分离、互动模式判断、建议回复与不建议发送内容。',
+        '30 天分手恢复陪伴': '每日情绪急救卡、复联冲动管理、生活节律任务、关系复盘问题和阶段总结。',
+        '真人关系复盘预约': '45 分钟真人复盘、关系事件时间线整理、一份沟通/分开行动方案。'
+      };
+      window.currentOrder = {name, price};
+      document.getElementById('modalTitle').textContent = `${name} · ¥${price}`;
+      document.getElementById('modalDesc').textContent = '这是付费服务的商业原型展示。点击确认后会生成“模拟下单成功”的反馈，不会真实扣费。';
+      document.getElementById('deliverableText').textContent = deliverables[name] || deliverables['完整关系报告'];
+      document.getElementById('modalBackdrop').classList.add('show');
+    }
+    function closeModal() { document.getElementById('modalBackdrop').classList.remove('show'); }
+    function confirmPay() {
+      const order = window.currentOrder || {name:'服务', price:0};
+      const name = document.getElementById('buyerName').value || '匿名用户';
+      closeModal();
+      showToast(`${name} 已模拟下单：${order.name}`);
+    }
+    function openMenu() { document.getElementById('menuBackdrop').classList.add('show'); }
+    function closeMenu() { document.getElementById('menuBackdrop').classList.remove('show'); }
+
+    function saveFeedback() {
+      const item = {
+        time: new Date().toLocaleString('zh-CN'),
+        need: document.getElementById('fbNeed').value,
+        useful: document.getElementById('fbUseful').value,
+        pay: document.getElementById('fbPay').value,
+        text: document.getElementById('fbText').value.trim()
+      };
+      const list = JSON.parse(localStorage.getItem('fenleme_feedback') || '[]');
+      list.unshift(item);
+      localStorage.setItem('fenleme_feedback', JSON.stringify(list));
+      document.getElementById('fbText').value = '';
+      renderFeedback();
+      showToast('反馈已保存在本地浏览器');
+    }
+    function renderFeedback() {
+      const list = JSON.parse(localStorage.getItem('fenleme_feedback') || '[]');
+      const box = document.getElementById('feedbackList');
+      if (!box) return;
+      if (!list.length) { box.className = 'empty-state'; box.textContent = '还没有反馈。'; return; }
+      box.className = '';
+      box.innerHTML = list.map(item => `<div class="result-block"><h4>${item.time}</h4><p><b>问题：</b>${item.need}</p><p><b>有用性：</b>${item.useful}</p><p><b>付费意愿：</b>${item.pay}</p><p><b>补充：</b>${item.text || '无'}</p></div>`).join('');
+    }
+    function copyFeedback() {
+      const data = localStorage.getItem('fenleme_feedback') || '[]';
+      navigator.clipboard?.writeText(data).then(() => showToast('反馈 JSON 已复制')).catch(() => showToast(data));
+    }
+    function clearFeedback() {
+      localStorage.removeItem('fenleme_feedback');
+      renderFeedback();
+      showToast('已清空本地反馈');
+    }
+  </script>
+</body>
+</html>
